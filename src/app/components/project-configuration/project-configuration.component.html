@@ -1,0 +1,74 @@
+<div class="config-container">
+  <div class="config-header">
+    <div class="header-title">
+      <h2>{{ project ? 'Edit Project: ' + project.name : 'New Project' }}</h2>
+    </div>
+    <div class="tabs">
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'model'"
+        (click)="setActiveTab('model')">
+        <i class="fas fa-robot"></i>
+        Model
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'transcriber'"
+        (click)="setActiveTab('transcriber')">
+        <i class="fas fa-file-alt"></i>
+        Transcriber
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'voice'"
+        (click)="setActiveTab('voice')">
+        <i class="fas fa-microphone"></i>
+        Voice
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'functions'"
+        (click)="setActiveTab('functions')">
+        <i class="fas fa-code"></i>
+        Functions
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'advanced'"
+        (click)="setActiveTab('advanced')">
+        <i class="fas fa-cogs"></i>
+        Advanced
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'analysis'"
+        (click)="setActiveTab('analysis')">
+        <i class="fas fa-chart-line"></i>
+        Analysis
+      </button>
+    </div>
+    <button class="publish-button">
+      <i class="fas fa-cloud-upload-alt"></i>
+      {{ project ? 'Update' : 'Publish' }}
+    </button>
+  </div>
+
+  <div class="config-content">
+    <div [ngSwitch]="activeTab">
+      <div *ngSwitchCase="'model'" class="tab-content">
+        <div class="section">
+          <h2>Summary</h2>
+          <p class="description">This is the prompt that's used to summarize the call. The output is stored in call_analysis_summary. You can also find the summary in the Call Logs Page.</p>
+          
+          <div class="prompt-section">
+            <h3>Prompt</h3>
+            <textarea 
+              class="prompt-input" 
+              placeholder="You are an expert note-taker. You will be given a transcript of a call. Summarize the call in 2-3 sentences, if applicable."
+              rows="6">You are an expert note-taker. You will be given a transcript of a call. Summarize the call in 2-3 sentences, if applicable.</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

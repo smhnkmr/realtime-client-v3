@@ -1,0 +1,36 @@
+<div class="app-container">
+  <header *ngIf="!isInDashboard">
+    <nav class="navbar">
+      <div class="container">
+        <div class="navbar-brand">
+          <h1>VAPI</h1>
+        </div>
+        <div class="navbar-menu">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+          
+          <!-- Show these links only when user is NOT authenticated -->
+          <ng-container *ngIf="!isInDashboard">
+            <a routerLink="/sign-in" routerLinkActive="active" class="auth-btn">Sign In</a>
+            <a routerLink="/sign-up" routerLinkActive="active" class="auth-btn">Sign Up</a>
+          </ng-container>
+          
+          <!-- Show these links only when user is authenticated -->
+          <!-- <ng-container *ngIf="supabaseService.user$ | async">
+            <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+            <a href="javascript:void(0)" (click)="onSignOut()" class="auth-btn sign-out">Sign Out</a>
+          </ng-container> -->
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main [class.no-navbar]="isInDashboard">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer *ngIf="!isInDashboard">
+    <div class="container">
+      <p>© {{currentYear}} VAPI. All rights reserved.</p>
+    </div>
+  </footer>
+</div>
