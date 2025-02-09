@@ -307,7 +307,6 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
 
         this.webSocket.onclose = (event) => {
             console.log("websocket closed: ", event);
-            alert("Connection closed");
         };
 
         this.webSocket.onerror = (event) => {
@@ -357,15 +356,23 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
 
     private receiveMessage(event: MessageEvent): void {
         const messageData = JSON.parse(event.data);
+        
+        // Check for deadline exceeded error and end the call if found.
+        if (messageData.error && messageData.code === "DEADLINE_EXCEEDED") {
+          console.error("Deadline exceeded error received. Ending call.");
+          this.endCall();
+          return;
+        }
+        
         const response = new Response(messageData);
-
+        
         if (response.text) {
-            this.displayMessage("GEMINI: " + response.text);
+          this.displayMessage("GEMINI: " + response.text);
         }
         if (response.audioData) {
-            this.injestAudioChuckToPlay(response.audioData);
+          this.injestAudioChuckToPlay(response.audioData);
         }
-    }
+      }
 
     private async initializeAudioContext(): Promise<void> {
         if (this.initialized) return;
