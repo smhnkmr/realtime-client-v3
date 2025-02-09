@@ -55,20 +55,20 @@
       </div>
 
       <div class="interaction-options">
-        <div class="option-card" (click)="toggleVideo('talk')">
+        <!-- <div class="option-card" (click)="toggleVideo('talk')">
           <div class="icon">
             <i class="fas fa-microphone"></i>
           </div>
           <h3>Talk to Gemini</h3>
           <p>Start a real-time conversation using your microphone.</p>
-        </div>
+        </div> -->
 
         <div class="option-card" (click)="toggleVideo('screen')">
           <div class="icon">
             <i class="fas fa-desktop"></i>
           </div>
-          <h3>Share your screen</h3>
-          <p>Share your screen to show Gemini what you're working on.</p>
+          <h2>Connect With Live Agent</h2>
+          <p>Share your screen and ask your queries about the project to live agent.</p>
         </div>
       </div>
     </div>
@@ -76,12 +76,12 @@
     <div class="chat-input" *ngIf="showVideo">
       <div class="call-timer">{{ formattedDuration }}</div>
       <div class="call-controls">
-        <button class="control-btn" [class.active]="isMicOn" (click)="toggleMic()">
+        <!-- <button class="control-btn" [class.active]="isMicOn" (click)="toggleMic()">
           <i class="fas" [class.fa-microphone]="isMicOn" [class.fa-microphone-slash]="!isMicOn"></i>
         </button>
         <button class="control-btn" [class.active]="isScreenSharing" (click)="toggleScreenShare()">
           <i class="fas fa-desktop"></i>
-        </button>
+        </button> -->
         <button class="control-btn end-call" (click)="endCall()">
           <i class="fas fa-phone-slash"></i>
         </button>

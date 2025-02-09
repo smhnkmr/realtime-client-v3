@@ -249,6 +249,12 @@ video {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
+  justify-content: center; /* added to align the items in the center */
+  justify-items: center;   /* added to center grid items */
+  width: 80%;       /* occupy 80% of available content area */
+  height: 80%;
+  margin-left: auto; /* center horizontally */
+  margin-right: auto;/* center horizontally */
 }
 
 .option-card {
@@ -258,6 +264,8 @@ video {
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 30%;
+  height: 30%;
 }
 
 .option-card:hover {
