@@ -43,15 +43,8 @@
 
   <div class="gemini-container">
     <div class="video-container" [class.show]="showVideo">
-      <!-- <video #videoElement [class.show]="showVideo" autoplay playsinline>
-        Your browser does not support the video element.
-      </video>
-      <div class="video-overlay" *ngIf="showVideo">
-        <h2>{{ videoMode === 'talk' ? 'Talk to Gemini' : 'Screen Sharing' }}</h2>
-        <button class="stop-btn" (click)="toggleVideo(videoMode!)">Stop</button>
-      </div> -->
-      <video #videoElement autoplay [style.width.px]="640" [style.height.px]="480"></video>
-      <canvas #canvasElement id="canvasElement" [style.width.px]="640" [style.height.px]="480"></canvas>
+      <video #videoElement id="videoElement" autoplay></video>
+      <canvas #canvasElement id="canvasElement"></canvas>
       <div #chatLog></div>
     </div>
 

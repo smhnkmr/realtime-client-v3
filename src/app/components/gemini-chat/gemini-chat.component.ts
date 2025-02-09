@@ -222,10 +222,10 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
     private async startScreenShare() {
         try {
             this.stream = await navigator.mediaDevices.getDisplayMedia({
-                video: {
-                    width: { max: 640 },
-                    height: { max: 480 },
-                },
+              video: {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+              },
             });
 
             this.videoElement.nativeElement.srcObject = this.stream;
