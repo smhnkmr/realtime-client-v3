@@ -171,11 +171,20 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
 
   toggleMic() {
     this.isMicOn = !this.isMicOn;
-    this.startAudioInput();
+    if(this.isMicOn) {
+      this.startAudioInput();
+    } else {
+      this.stopAudioInput();
+    }
   }
 
   toggleScreenShare() {
     this.isScreenSharing = !this.isScreenSharing;
+    if (this.isScreenSharing) {
+      this.startScreenShare();
+    } else {
+      this.stopScreenShare();
+    }
   }
 
   //#region  realtime
@@ -194,6 +203,7 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
     private processor: ScriptProcessorNode | null = null;
     private pcmData: number[] = [];
     private interval: any = null;
+    private captureInterval: any = null; // added to store capture image interval
     private initialized = false;
     private audioInputContext: AudioContext | null = null;
     private workletNode: AudioWorkletNode | null = null;
@@ -201,18 +211,43 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
 
     // New method to toggle start call and initialize when needed
     async startCall(): Promise<void> {
-        if (!this.isCallActive) {
-            await this.startScreenShare();
-            await this.initializeAudioContext();
-            this.connect();
-            setInterval(() => this.captureImage(), 3000);
+      if (this.isCallActive) return; // Call already active
+      await this.startScreenShare();
+      await this.initializeAudioContext();
+      this.connect();
+      this.captureInterval = setInterval(() => this.captureImage(), 3000); // Save interval ID
+      this.startAudioInput(); // Activate microphone
+      this.isMicOn = true; // Ensure mic is flagged active
+      this.isScreenSharing = true;
+      this.isCallActive = true;
+      this.context = this.canvasElement.nativeElement.getContext('2d');
+    }
 
-            this.startAudioInput();
-            this.isCallActive = true;
-            this.context = this.canvasElement.nativeElement.getContext('2d');
-        } else {
-            this.isCallActive = false;
-        }
+    // New endCall method to release all call-related resources
+    async endCall(): Promise<void> {
+      // Stop the screen sharing
+      this.stopScreenShare();
+      // Clear the capture interval if set
+      if (this.captureInterval) {
+        clearInterval(this.captureInterval);
+        this.captureInterval = null;
+      }
+      // Stop the audio input
+      this.stopAudioInput();
+      // Close the websocket connection
+      if (this.webSocket) {
+        this.webSocket.close();
+        this.webSocket = null;
+      }
+      // Call the new uninitialize method for the audio context
+      await this.uninitializeAudioContext();
+      // Reset the current frame base64
+      this.currentFrameB64 = undefined;
+      // Reset call flags
+      this.isCallActive = false;
+      this.isMicOn = false;
+      this.isScreenSharing = false;
+      this.showVideo = false;
     }
 
     ngAfterViewInit() {
@@ -220,25 +255,35 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
     }
 
     private async startScreenShare() {
-        try {
-            this.stream = await navigator.mediaDevices.getDisplayMedia({
-              video: {
-                width: { ideal: 1920 },
-                height: { ideal: 1080 },
-              },
-            });
+      try {
+        this.stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          },
+        });
 
-            this.videoElement.nativeElement.srcObject = this.stream;
-            await new Promise(resolve => {
-                this.videoElement.nativeElement.onloadedmetadata = () => {
-                    console.log("video loaded metadata");
-                    resolve(true);
-                }
-            });
+        this.videoElement.nativeElement.srcObject = this.stream;
+        await new Promise(resolve => {
+          this.videoElement.nativeElement.onloadedmetadata = () => {
+            console.log("video loaded metadata");
+            resolve(true);
+          }
+        });
 
-        } catch (err) {
-            console.error("Error accessing the screen: ", err);
-        }
+      } catch (err) {
+        console.error("Error accessing the screen: ", err);
+      }
+    }
+
+    private stopScreenShare() {
+      if (this.stream) {
+        const tracks = this.stream.getTracks();
+        tracks.forEach(track => track.stop());
+        this.stream = null;
+        this.videoElement.nativeElement.srcObject = null;
+        console.log("Screen sharing stopped");
+      }
     }
 
     private captureImage() {
@@ -324,26 +369,35 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
 
     private async initializeAudioContext(): Promise<void> {
         if (this.initialized) return;
-
         try {
-                this.audioInputContext = new AudioContext({ sampleRate: 24000 });
-                const moduleURL = new URL('/assets/pcm-processor.js', window.location.href);
-                await this.audioInputContext.audioWorklet.addModule(moduleURL.href);
-                
-                this.workletNode = new AudioWorkletNode(this.audioInputContext, 'pcm-processor');
-                this.workletNode.connect(this.audioInputContext.destination);
-                
-                this.workletNode.onprocessorerror = (err) => {
-                    console.error('Audio processor error:', err);
-                };
-                
-                this.initialized = true;
-                console.log('Audio worklet initialized successfully');
-            } catch (error) {
-                console.error('Failed to initialize audio worklet:', error);
-                this.initialized = false;
-                throw error;
-            }
+            this.audioInputContext = new AudioContext({ sampleRate: 24000 });
+            const moduleURL = new URL('/assets/pcm-processor.js', window.location.href);
+            await this.audioInputContext.audioWorklet.addModule(moduleURL.href);
+            
+            this.workletNode = new AudioWorkletNode(this.audioInputContext, 'pcm-processor');
+            this.workletNode.connect(this.audioInputContext.destination);
+            
+            this.workletNode.onprocessorerror = (err) => {
+                console.error('Audio processor error:', err);
+            };
+            
+            this.initialized = true;
+            console.log('Audio worklet initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize audio worklet:', error);
+            this.initialized = false;
+            throw error;
+        }
+    }
+
+    // New method to uninitialize the audio context and related worklet resources
+    private async uninitializeAudioContext(): Promise<void> {
+        if (this.audioInputContext) {
+            await this.audioInputContext.close();
+            this.audioInputContext = null;
+        }
+        this.workletNode = null;
+        this.initialized = false;
     }
 
     private base64ToArrayBuffer(base64: string): ArrayBuffer {
@@ -381,18 +435,20 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
     }
 
     private recordChunk(): void {
-        const buffer = new ArrayBuffer(this.pcmData.length * 2);
-        const view = new DataView(buffer);
-        this.pcmData.forEach((value, index) => {
-            view.setInt16(index * 2, value, true);
-        });
-
-        const base64 = btoa(
-            String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer)))
-        );
-
-        this.sendVoiceMessage(base64);
-        this.pcmData = [];
+      const buffer = new ArrayBuffer(this.pcmData.length * 2);
+      const view = new DataView(buffer);
+      this.pcmData.forEach((value, index) => {
+        view.setInt16(index * 2, value, true);
+      });
+      const uint8Array = new Uint8Array(buffer);
+      let binary = "";
+      const chunkSize = 0x8000; // 32K chunks
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, Array.from(uint8Array.subarray(i, i + chunkSize)));
+      }
+      const base64 = btoa(binary);
+      this.sendVoiceMessage(base64);
+      this.pcmData = [];
     }
 
     public async startAudioInput(): Promise<void> {
