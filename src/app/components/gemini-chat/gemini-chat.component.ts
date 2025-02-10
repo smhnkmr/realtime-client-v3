@@ -96,10 +96,7 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
       this.stopAudioInput();
       this.stopTimer();
     } else {
-      this.showVideo = true;
-      this.videoMode = mode;
-      this.startCall();
-      this.startTimer();
+      this.startCall(mode);
     }
   }
 
@@ -208,11 +205,23 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
     private audioInputContext: AudioContext | null = null;
     private workletNode: AudioWorkletNode | null = null;
     isCallActive: boolean = false; // new property to toggle main content
+    private microphoneStream: MediaStream | null = null; // new property
 
     // New method to toggle start call and initialize when needed
-    async startCall(): Promise<void> {
+    async startCall(mode: 'talk' | 'screen'): Promise<void> {
       if (this.isCallActive) return; // Call already active
-      await this.startScreenShare();
+
+      try {
+        await this.startScreenShare();
+      } catch (error) {
+        console.error("Failed to start screen share, aborting call", error);
+        return; // gracefully abort startCall
+      }
+
+      this.showVideo = true;
+      this.videoMode = mode;
+      this.startTimer();
+
       await this.initializeAudioContext();
       this.connect();
       this.captureInterval = setInterval(() => this.captureImage(), 3000); // Save interval ID
@@ -254,15 +263,14 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
         //this.context = this.canvasElement.nativeElement.getContext('2d');
     }
 
-    private async startScreenShare() {
+    private async startScreenShare(): Promise<void> {
       try {
         this.stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           },
         });
-
         this.videoElement.nativeElement.srcObject = this.stream;
         await new Promise(resolve => {
           this.videoElement.nativeElement.onloadedmetadata = () => {
@@ -270,9 +278,9 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
             resolve(true);
           }
         });
-
       } catch (err) {
         console.error("Error accessing the screen: ", err);
+        throw err; // abort startCall if screen-sharing fails
       }
     }
 
@@ -470,6 +478,7 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
                 sampleRate: 16000,
             },
         });
+        this.microphoneStream = stream; // store the stream
 
         const source = this.audioContext.createMediaStreamSource(stream);
         this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
@@ -496,6 +505,10 @@ export class GeminiChatComponent implements OnInit, OnDestroy {
         }
         if (this.audioContext) {
             this.audioContext.close();
+        }
+        if (this.microphoneStream) { // release microphone stream
+            this.microphoneStream.getTracks().forEach(track => track.stop());
+            this.microphoneStream = null;
         }
         clearInterval(this.interval);
     }

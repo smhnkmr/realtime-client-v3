@@ -53,10 +53,17 @@
   max-width: 600px;
 }
 
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
 .cta-buttons {
   display: flex;
   gap: 1rem;
   margin-bottom: 3rem;
+  justify-content: center; /* new addition for center alignment */
 }
 
 .btn-primary {

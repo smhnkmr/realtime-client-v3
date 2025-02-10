@@ -26,10 +26,7 @@ export class ProjectService {
       // For now, return dummy data
       // In a real application, this would be a Supabase query
       const dummyProjects: Project[] = [
-        { id: '1', name: 'Chat Assistant', userId },
-        { id: '2', name: 'Image Generator', userId },
-        { id: '3', name: 'Code Helper', userId },
-        { id: '4', name: 'Text Analyzer', userId }
+        { id: '1', name: 'Y Combinator', userId }
       ];
       
       this.projectsSubject.next(dummyProjects);
